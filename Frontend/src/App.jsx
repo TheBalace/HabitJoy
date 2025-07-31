@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import AuthForm from "./components/AuthForm";
+// --- THE FIX: Ensure this path and capitalization exactly matches your file ---
+import AuthForm from "./components/Authform"; 
 import HabitList from "./components/HabitList";
 import AuroraBackground from "./components/AuroraBackground";
-import { API_BASE_URL } from "./api"; // Import the new base URL
+import { API_BASE_URL } from "./api";
 
 const App = () => {
   const [authType, setAuthType] = useState("login");
@@ -21,7 +22,6 @@ const App = () => {
   const handleAuthSubmit = async (formData) => {
     setLoading(true);
     setError("");
-    // Use the new API_BASE_URL
     const url = `${API_BASE_URL}/api/auth/${authType}`;
     try {
       const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData), });
@@ -33,8 +33,7 @@ const App = () => {
         setToken(data.token);
         setUser(data.user);
       }
-    } catch (err) {
-      setError(err.message);
+    } catch (err)      setError(err.message);
     } finally {
       setLoading(false);
     }
