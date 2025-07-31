@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-// --- THE FIX: Ensure this path and capitalization exactly matches your file ---
 import AuthForm from "./components/Authform"; 
 import HabitList from "./components/HabitList";
 import AuroraBackground from "./components/AuroraBackground";
@@ -33,7 +32,8 @@ const App = () => {
         setToken(data.token);
         setUser(data.user);
       }
-    } catch (err)      setError(err.message);
+    } catch (err) { // --- THE FIX: Added the missing curly braces ---
+      setError(err.message);
     } finally {
       setLoading(false);
     }
