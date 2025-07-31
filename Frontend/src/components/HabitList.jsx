@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import ProfilePage from "./ProfilePage";
-import { API_BASE_URL } from "../api"; // Import the new base URL
+import { API_BASE_URL } from "../api";
 
+// --- (All sub-components are unchanged) ---
 const allBadges = {
   POINTS_100: { name: "Point Collector", description: "Earn your first 100 points." },
   POINTS_500: { name: "Point Enthusiast", description: "Earn 500 points." },
@@ -11,21 +12,9 @@ const allBadges = {
   STREAK_7: { name: "Weekly Warrior", description: "Maintain a 7-day streak on any habit." },
   STREAK_30: { name: "Month of Mastery", description: "Maintain a 30-day streak on any habit." },
 };
-
 const CompletionRing = ({ isCompleted, onClick }) => { const ringSize = 40; const strokeWidth = 4; const radius = (ringSize - strokeWidth) / 2; const circumference = radius * 2 * Math.PI; return ( <div className={`relative flex-shrink-0 cursor-pointer group transition-opacity duration-300`} style={{ width: ringSize, height: ringSize }} onClick={onClick} > <svg className="w-full h-full" viewBox={`0 0 ${ringSize} ${ringSize}`}> <circle className="text-[var(--glass-border)]" stroke="currentColor" strokeWidth={strokeWidth} fill="transparent" r={radius} cx={ringSize / 2} cy={ringSize / 2} /> <circle className="text-emerald-500" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={isCompleted ? 0 : circumference} strokeLinecap="round" fill="transparent" r={radius} cx={ringSize / 2} cy={ringSize / 2} transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`} style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }} /> {isCompleted && (<path className="text-emerald-400" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" d={`M${ringSize * 0.3} ${ringSize * 0.55} l${ringSize * 0.15} ${ringSize * 0.15} l${ringSize * 0.3} -${ringSize * 0.3}`} />)} </svg> </div> ); };
-
-const NegativeHabitControls = ({ onSucceed, onFail, todaysAction }) => {
-    if (todaysAction === 'success') {
-        return <p className="text-sm font-semibold text-emerald-400">Success Logged!</p>;
-    }
-    if (todaysAction === 'fail') {
-        return <p className="text-sm font-semibold text-red-400">Setback Logged.</p>;
-    }
-    return ( <div className="flex items-center gap-2"> <p className="text-sm text-[var(--text-color-muted)] font-semibold">Succeeded?</p> <button onClick={onSucceed} className="px-3 py-1 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition">Yes</button> <button onClick={onFail} className="px-3 py-1 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-md transition">No</button> </div> );
-};
-
+const NegativeHabitControls = ({ onSucceed, onFail, todaysAction }) => { if (todaysAction === 'success') { return <p className="text-sm font-semibold text-emerald-400">Success Logged!</p>; } if (todaysAction === 'fail') { return <p className="text-sm font-semibold text-red-400">Setback Logged.</p>; } return ( <div className="flex items-center gap-2"> <p className="text-sm text-[var(--text-color-muted)] font-semibold">Succeeded?</p> <button onClick={onSucceed} className="px-3 py-1 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition">Yes</button> <button onClick={onFail} className="px-3 py-1 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-md transition">No</button> </div> ); };
 const Sidebar = ({ user, allHabits, selectedArea, setSelectedArea, onLogout }) => { const userLevel = user ? Math.floor(user.points / 100) + 1 : 1; const areas = useMemo(() => { const uniqueAreas = new Set(allHabits.filter(h => !h.isArchived).map(h => h.area || 'General')); return ['All', ...Array.from(uniqueAreas).sort()]; }, [allHabits]); return ( <div className="glass-card p-6 h-full flex flex-col"> {user && ( <div className="text-center flex-shrink-0"> <h2 className="text-2xl font-bold text-[var(--text-color)] drop-shadow">{user.username}</h2> <p className="text-sm text-[var(--text-color-muted)]">Level {userLevel} - {user.points} Points</p> </div> )} <div className="flex-grow overflow-y-auto space-y-4 mt-6 pr-2"> <div className="pb-4"> <button onClick={() => setSelectedArea('Profile')} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === 'Profile' ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`}> My Profile </button> </div> <div className="pt-4 border-t border-[var(--glass-border)]"> <h3 className="text-lg font-semibold text-[var(--text-color)] mb-3 drop-shadow">Areas</h3> <ul className="space-y-2"> {areas.map(area => ( <li key={area}> <button onClick={() => setSelectedArea(area)} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === area ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`} > {area} </button> </li> ))} </ul> </div> <div className="pt-4 border-t border-[var(--glass-border)]"> <button onClick={() => setSelectedArea('Archived')} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === 'Archived' ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`}> Archived Habits </button> </div> {user && user.badges && user.badges.length > 0 && ( <div> <h3 className="text-lg font-semibold text-[var(--text-color)] mb-3 drop-shadow">🏆 Badges</h3> <div className="flex flex-wrap gap-2"> {user.badges.map(badgeId => { const badge = allBadges[badgeId]; if (!badge) return null; return ( <div key={badgeId} className="glass-card p-2 text-center rounded-lg" title={`${badge.name}: ${badge.description}`}> <span className="text-2xl">{badge.name.match(/collector/i) ? '💰' : badge.name.match(/warrior/i) ? '🛡️' : '🚀'}</span> </div> ); })} </div> </div> )} </div> <div className="pt-6 border-t border-[var(--glass-border)] flex-shrink-0"> <button onClick={onLogout} className="w-full text-left font-semibold text-[var(--text-color-muted)] hover:text-[var(--text-color)] transition"> Logout </button> </div> </div> ); };
-
 const JournalModal = ({ isOpen, onClose, habit, mode, onSave }) => {
   const [note, setNote] = useState('');
   useEffect(() => { if (mode === 'add') { setNote(''); } }, [isOpen, mode]);
@@ -100,10 +89,11 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                 </form>
               ) : (
                 <div className="flex-grow flex flex-col min-h-0">
-                  <div className="flex flex-wrap justify-between items-center gap-4 mb-4 flex-shrink-0">
+                  {/* --- FIXED: Responsive Header --- */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 flex-shrink-0">
                       <h2 className="text-3xl font-bold text-[var(--text-color)] drop-shadow">{selectedArea} Habits</h2>
-                      <div className="flex items-center gap-4">
-                          {selectedArea !== 'Archived' && ( <> <button onClick={() => setIsAnalyticsOpen(true)} className="glass-button bg-sky-600 hover:bg-sky-700"> Analytics </button> <select value={filter} onChange={(e) => setFilter(e.target.value)} className="glass-input"> <option className="text-black" value="all">All</option> <option className="text-black" value="daily">Daily</option> <option className="text-black" value="weekly">Weekly</option> <option className="text-black" value="monthly">Monthly</option> <option className="text-black" value="custom">Custom</option> </select> <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="glass-input"> <option className="text-black" value="newest">Newest</option> <option className="text-black" value="oldest">Oldest</option> </select> <button onClick={handleShowAddForm} className="glass-button flex-shrink-0">+ Add</button> </> )}
+                      <div className="flex items-center gap-2 sm:gap-4">
+                          {selectedArea !== 'Archived' && ( <> <button onClick={() => setIsAnalyticsOpen(true)} className="glass-button bg-sky-600 hover:bg-sky-700 flex-1 sm:flex-none"> Analytics </button> <select value={filter} onChange={(e) => setFilter(e.target.value)} className="glass-input"> <option className="text-black" value="all">All</option> <option className="text-black" value="daily">Daily</option> <option className="text-black" value="weekly">Weekly</option> <option className="text-black" value="monthly">Monthly</option> <option className="text-black" value="custom">Custom</option> </select> <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="glass-input"> <option className="text-black" value="newest">Newest</option> <option className="text-black" value="oldest">Oldest</option> </select> <button onClick={handleShowAddForm} className="glass-button flex-shrink-0">+ Add</button> </> )}
                       </div>
                   </div>
                   <div className="overflow-y-auto flex-grow pr-2">
@@ -112,7 +102,8 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                         {habitsToDisplay.map(habit => {
                           const todaysAction = getTodaysAction(habit);
                           return (
-                            <li key={habit._id} className="glass-card p-4 flex items-center justify-between">
+                            // --- FIXED: Responsive Habit Card Layout ---
+                            <li key={habit._id} className="glass-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                               <div className="flex-grow">
                                 <p className="font-semibold text-[var(--text-color)] drop-shadow">{habit.title}</p>
                                 <p className="text-sm text-[var(--text-color-muted)]">{habit.description}</p>
@@ -121,7 +112,8 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                                   <span>🏆 Longest Streak: <span className="font-semibold">{habit.longestStreak || 0}</span></span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4 ml-4">
+                              {/* --- FIXED: Responsive Button Container --- */}
+                              <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4 flex-shrink-0">
                                 {selectedArea === 'Archived' ? ( <> <button onClick={() => handleDelete(habit._id)} className="text-xs font-semibold text-red-400 hover:text-red-500 transition">Delete</button> <button onClick={() => handleArchiveToggle(habit._id)} className="text-xs font-semibold text-emerald-400 hover:text-emerald-500 transition">Restore</button> </>
                                 ) : (
                                   <>
