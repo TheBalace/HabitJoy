@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AuthForm from "./components/AuthForm";
 import HabitList from "./components/HabitList";
 import AuroraBackground from "./components/AuroraBackground";
+import { API_BASE_URL } from "./api"; // Import the new base URL
 
 const App = () => {
   const [authType, setAuthType] = useState("login");
@@ -20,7 +21,8 @@ const App = () => {
   const handleAuthSubmit = async (formData) => {
     setLoading(true);
     setError("");
-    const url = `http://localhost:5000/api/auth/${authType}`;
+    // Use the new API_BASE_URL
+    const url = `${API_BASE_URL}/api/auth/${authType}`;
     try {
       const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData), });
       const data = await response.json();

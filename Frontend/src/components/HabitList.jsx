@@ -1,72 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import ProfilePage from "./ProfilePage";
+import { API_BASE_URL } from "../api"; // Import the new base URL
 
-// --- 1. Professional Sound Feedback Setup ---
-let toneLoaded = false;
-let synth, reverb;
-
-const loadToneScript = () => {
-  if (document.getElementById('tone-script') || toneLoaded) {
-    return;
-  }
-  const script = document.createElement("script");
-  script.id = 'tone-script';
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js";
-  script.async = true;
-  script.onload = () => {
-    toneLoaded = true;
-    if (window.Tone) {
-        reverb = new window.Tone.Reverb({ decay: 0.5, wet: 0.2 }).toDestination();
-        synth = new window.Tone.PolySynth(window.Tone.Synth, {
-            oscillator: { type: "sine" },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 },
-        }).connect(reverb);
-        console.log("Professional sound engine initialized.");
-    }
-  };
-  document.body.appendChild(script);
-};
-
-// --- NEW: A robust wrapper function to handle all sound playback ---
-// This function ensures the browser's audio context is running before playing a sound.
-const playSound = async (soundPlayer) => {
-    if (!toneLoaded || !window.Tone || !soundPlayer) return;
-
-    // This is the key fix: We ensure Tone.js is started by a user gesture.
-    if (window.Tone.context.state !== 'running') {
-        await window.Tone.start();
-    }
-    
-    soundPlayer(); // Now we can safely play the sound.
-};
-
-// --- A curated palette of professional, non-annoying sounds ---
-const playCompletionSound = () => {
-  if (synth) {
-    const now = window.Tone.now();
-    synth.triggerAttackRelease("C5", "8n", now);
-    synth.triggerAttackRelease("G5", "8n", now + 0.1);
-  }
-};
-const playUndoSound = () => {
-  if (synth) {
-    synth.triggerAttackRelease("G4", "8n");
-  }
-};
-const playNewItemSound = () => {
-    if (synth) {
-        synth.triggerAttackRelease("E5", "8n");
-    }
-};
-const playInteractionSound = () => {
-    if (synth) {
-        synth.triggerAttackRelease("C6", "16n", undefined, 0.5);
-    }
-};
-
-
-// --- (The rest of your components are unchanged) ---
 const allBadges = {
   POINTS_100: { name: "Point Collector", description: "Earn your first 100 points." },
   POINTS_500: { name: "Point Enthusiast", description: "Earn 500 points." },
@@ -75,17 +11,31 @@ const allBadges = {
   STREAK_7: { name: "Weekly Warrior", description: "Maintain a 7-day streak on any habit." },
   STREAK_30: { name: "Month of Mastery", description: "Maintain a 30-day streak on any habit." },
 };
+
 const CompletionRing = ({ isCompleted, onClick }) => { const ringSize = 40; const strokeWidth = 4; const radius = (ringSize - strokeWidth) / 2; const circumference = radius * 2 * Math.PI; return ( <div className={`relative flex-shrink-0 cursor-pointer group transition-opacity duration-300`} style={{ width: ringSize, height: ringSize }} onClick={onClick} > <svg className="w-full h-full" viewBox={`0 0 ${ringSize} ${ringSize}`}> <circle className="text-[var(--glass-border)]" stroke="currentColor" strokeWidth={strokeWidth} fill="transparent" r={radius} cx={ringSize / 2} cy={ringSize / 2} /> <circle className="text-emerald-500" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={isCompleted ? 0 : circumference} strokeLinecap="round" fill="transparent" r={radius} cx={ringSize / 2} cy={ringSize / 2} transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`} style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }} /> {isCompleted && (<path className="text-emerald-400" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" d={`M${ringSize * 0.3} ${ringSize * 0.55} l${ringSize * 0.15} ${ringSize * 0.15} l${ringSize * 0.3} -${ringSize * 0.3}`} />)} </svg> </div> ); };
-const NegativeHabitControls = ({ onSucceed, onFail, todaysAction }) => { if (todaysAction === 'success') { return <p className="text-sm font-semibold text-emerald-400">Success Logged!</p>; } if (todaysAction === 'fail') { return <p className="text-sm font-semibold text-red-400">Setback Logged.</p>; } return ( <div className="flex items-center gap-2"> <p className="text-sm text-[var(--text-color-muted)] font-semibold">Succeeded?</p> <button onClick={onSucceed} className="px-3 py-1 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition">Yes</button> <button onClick={onFail} className="px-3 py-1 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-md transition">No</button> </div> ); };
-const JournalModal = ({ isOpen, onClose, habit, mode, onSave }) => { const [note, setNote] = useState(''); useEffect(() => { if (mode === 'add') { setNote(''); } }, [isOpen, mode]); if (!isOpen || !habit) return null; const title = mode === 'add' ? `Log Entry for "${habit.title}"` : `Journal for "${habit.title}"`; const allEntries = [ ...(habit.completionLog || []).map(e => ({...e, type: 'success'})), ...(habit.failureLog || []).map(e => ({...e, type: 'fail'})) ].sort((a, b) => new Date(b.date) - new Date(a.date)); return ( <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"> <div className="glass-card w-full max-w-lg p-6 space-y-4 max-h-[80vh] flex flex-col"> <h2 className="text-2xl font-bold text-[var(--text-color)] drop-shadow">{title}</h2> {mode === 'add' && ( <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="How did it go today? (Optional)" className="glass-input w-full h-24 resize-none" /> )} {mode === 'view' && ( <div className="flex-grow overflow-y-auto pr-2 space-y-3"> {allEntries.length > 0 ? allEntries.map((entry, index) => ( <div key={index} className={`p-3 rounded-lg ${entry.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}> <p className="font-semibold text-sm text-[var(--text-color)]"> {new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - <span className={entry.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{entry.type === 'success' ? 'Success' : 'Setback'}</span> </p> {entry.note && <p className="text-sm text-[var(--text-color-muted)] mt-1 italic">"{entry.note}"</p>} </div> )) : <p className="text-[var(--text-color-muted)] text-center">No journal entries yet.</p>} </div> )} <div className="flex justify-end gap-4 pt-4 border-t border-[var(--glass-border)]"> <button onClick={onClose} className="text-[var(--text-color-muted)] hover:text-[var(--text-color)] font-medium transition">Close</button> {mode === 'add' && <button onClick={() => onSave(note)} className="glass-button">Save Entry</button>} </div> </div> </div> ); };
+
+const NegativeHabitControls = ({ onSucceed, onFail, todaysAction }) => {
+    if (todaysAction === 'success') {
+        return <p className="text-sm font-semibold text-emerald-400">Success Logged!</p>;
+    }
+    if (todaysAction === 'fail') {
+        return <p className="text-sm font-semibold text-red-400">Setback Logged.</p>;
+    }
+    return ( <div className="flex items-center gap-2"> <p className="text-sm text-[var(--text-color-muted)] font-semibold">Succeeded?</p> <button onClick={onSucceed} className="px-3 py-1 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-md transition">Yes</button> <button onClick={onFail} className="px-3 py-1 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-md transition">No</button> </div> );
+};
+
 const Sidebar = ({ user, allHabits, selectedArea, setSelectedArea, onLogout }) => { const userLevel = user ? Math.floor(user.points / 100) + 1 : 1; const areas = useMemo(() => { const uniqueAreas = new Set(allHabits.filter(h => !h.isArchived).map(h => h.area || 'General')); return ['All', ...Array.from(uniqueAreas).sort()]; }, [allHabits]); return ( <div className="glass-card p-6 h-full flex flex-col"> {user && ( <div className="text-center flex-shrink-0"> <h2 className="text-2xl font-bold text-[var(--text-color)] drop-shadow">{user.username}</h2> <p className="text-sm text-[var(--text-color-muted)]">Level {userLevel} - {user.points} Points</p> </div> )} <div className="flex-grow overflow-y-auto space-y-4 mt-6 pr-2"> <div className="pb-4"> <button onClick={() => setSelectedArea('Profile')} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === 'Profile' ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`}> My Profile </button> </div> <div className="pt-4 border-t border-[var(--glass-border)]"> <h3 className="text-lg font-semibold text-[var(--text-color)] mb-3 drop-shadow">Areas</h3> <ul className="space-y-2"> {areas.map(area => ( <li key={area}> <button onClick={() => setSelectedArea(area)} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === area ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`} > {area} </button> </li> ))} </ul> </div> <div className="pt-4 border-t border-[var(--glass-border)]"> <button onClick={() => setSelectedArea('Archived')} className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${selectedArea === 'Archived' ? 'bg-white/20 text-[var(--text-color)] font-semibold' : 'text-[var(--text-color-muted)] hover:bg-white/10 hover:text-[var(--text-color)]'}`}> Archived Habits </button> </div> {user && user.badges && user.badges.length > 0 && ( <div> <h3 className="text-lg font-semibold text-[var(--text-color)] mb-3 drop-shadow">🏆 Badges</h3> <div className="flex flex-wrap gap-2"> {user.badges.map(badgeId => { const badge = allBadges[badgeId]; if (!badge) return null; return ( <div key={badgeId} className="glass-card p-2 text-center rounded-lg" title={`${badge.name}: ${badge.description}`}> <span className="text-2xl">{badge.name.match(/collector/i) ? '💰' : badge.name.match(/warrior/i) ? '🛡️' : '🚀'}</span> </div> ); })} </div> </div> )} </div> <div className="pt-6 border-t border-[var(--glass-border)] flex-shrink-0"> <button onClick={onLogout} className="w-full text-left font-semibold text-[var(--text-color-muted)] hover:text-[var(--text-color)] transition"> Logout </button> </div> </div> ); };
 
+const JournalModal = ({ isOpen, onClose, habit, mode, onSave }) => {
+  const [note, setNote] = useState('');
+  useEffect(() => { if (mode === 'add') { setNote(''); } }, [isOpen, mode]);
+  if (!isOpen || !habit) return null;
+  const title = mode === 'add' ? `Log Entry for "${habit.title}"` : `Journal for "${habit.title}"`;
+  const allEntries = [ ...(habit.completionLog || []).map(e => ({...e, type: 'success'})), ...(habit.failureLog || []).map(e => ({...e, type: 'fail'})) ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  return ( <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"> <div className="glass-card w-full max-w-lg p-6 space-y-4 max-h-[80vh] flex flex-col"> <h2 className="text-2xl font-bold text-[var(--text-color)] drop-shadow">{title}</h2> {mode === 'add' && ( <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="How did it go today? (Optional)" className="glass-input w-full h-24 resize-none" /> )} {mode === 'view' && ( <div className="flex-grow overflow-y-auto pr-2 space-y-3"> {allEntries.length > 0 ? allEntries.map((entry, index) => ( <div key={index} className={`p-3 rounded-lg ${entry.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}> <p className="font-semibold text-sm text-[var(--text-color)]"> {new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - <span className={entry.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{entry.type === 'success' ? 'Success' : 'Setback'}</span> </p> {entry.note && <p className="text-sm text-[var(--text-color-muted)] mt-1 italic">"{entry.note}"</p>} </div> )) : <p className="text-[var(--text-color-muted)] text-center">No journal entries yet.</p>} </div> )} <div className="flex justify-end gap-4 pt-4 border-t border-[var(--glass-border)]"> <button onClick={onClose} className="text-[var(--text-color-muted)] hover:text-[var(--text-color)] font-medium transition">Close</button> {mode === 'add' && <button onClick={() => onSave(note)} className="glass-button">Save Entry</button>} </div> </div> </div> );
+};
 
 const HabitList = ({ user, onUserUpdate, onLogout }) => {
-  useEffect(() => {
-    loadToneScript();
-  }, []);
-
   const [allHabits, setAllHabits] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
@@ -106,70 +56,25 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
   const getAuthHeaders = () => { const token = localStorage.getItem("token"); return token ? { Authorization: `Bearer ${token}` } : {}; };
   const getTodaysAction = (habit) => { const today = new Date(); today.setHours(0, 0, 0, 0); const todayTime = today.getTime(); const successToday = habit.completionLog?.find(entry => { const d = new Date(entry.date); d.setHours(0, 0, 0, 0); return d.getTime() === todayTime; }); if (successToday) return 'success'; const failToday = habit.failureLog?.find(entry => { const d = new Date(entry.date); d.setHours(0, 0, 0, 0); return d.getTime() === todayTime; }); if (failToday) return 'fail'; return null; };
   
-  useEffect(() => { const fetchAllHabits = async () => { try { const res = await fetch(`http://localhost:5000/api/habits/all`, { headers: getAuthHeaders() }); if (!res.ok) throw new Error(`Failed to fetch habits`); const data = await res.json(); setAllHabits(Array.isArray(data) ? data : []); } catch (err) { console.error("Error fetching habits:", err); setAllHabits([]); } }; if (user) { fetchAllHabits(); } }, [needsRefresh, user]);
+  useEffect(() => { const fetchAllHabits = async () => { try { const res = await fetch(`${API_BASE_URL}/api/habits/all`, { headers: getAuthHeaders() }); if (!res.ok) throw new Error(`Failed to fetch habits`); const data = await res.json(); setAllHabits(Array.isArray(data) ? data : []); } catch (err) { console.error("Error fetching habits:", err); setAllHabits([]); } }; if (user) { fetchAllHabits(); } }, [needsRefresh, user]);
   const habitsToDisplay = useMemo(() => { const isArchivedView = selectedArea === 'Archived'; let processedHabits = allHabits.filter(h => (h.isArchived || false) === isArchivedView); if (!isArchivedView && selectedArea !== 'All') { processedHabits = processedHabits.filter(h => (h.area || 'General') === selectedArea); } if (filter !== "all") { processedHabits = processedHabits.filter(h => h.frequency?.toLowerCase() === filter); } processedHabits.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); if (sortOrder === 'oldest') { processedHabits.reverse(); } return processedHabits; }, [allHabits, selectedArea, filter, sortOrder]);
   const triggerRefresh = () => setNeedsRefresh(prev => !prev);
   const handleApiAction = async (endpoint, method = 'POST', body = null) => { try { const options = { method, headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } }; if (body) options.body = JSON.stringify(body); const res = await fetch(endpoint, options); const data = await res.json(); if (!res.ok) { console.warn(data.message || "An API error occurred"); return; } triggerRefresh(); if (data.user && onUserUpdate) { onUserUpdate(data.user); } } catch (err) { console.error("API Action Error:", err); } };
-  const handleDelete = (id) => handleApiAction(`http://localhost:5000/api/habits/${id}`, 'DELETE');
   
-  const handleUndo = (id) => {
-    handleApiAction(`http://localhost:5000/api/habits/${id}/undo`);
-    playSound(playUndoSound);
-  };
-
-  const handleArchiveToggle = (id) => {
-    handleApiAction(`http://localhost:5000/api/habits/${id}/archive`, 'PUT');
-    playSound(playInteractionSound);
-  };
-
-  const handleReset = (id) => { 
-    handleApiAction(`http://localhost:5000/api/habits/${id}/reset`, 'POST'); 
-    playSound(playUndoSound);
-  };
-
-  const openJournalModal = (habit, action) => { 
-    setJournalHabit(habit); 
-    setJournalAction(() => action); 
-    setJournalMode('add'); 
-    setIsJournalModalOpen(true); 
-  };
+  const handleDelete = (id) => handleApiAction(`${API_BASE_URL}/api/habits/${id}`, 'DELETE');
+  const handleUndo = (id) => handleApiAction(`${API_BASE_URL}/api/habits/${id}/undo`);
+  const handleArchiveToggle = (id) => handleApiAction(`${API_BASE_URL}/api/habits/${id}/archive`, 'PUT');
+  const handleReset = (id) => handleApiAction(`${API_BASE_URL}/api/habits/${id}/reset`, 'POST');
   
-  const handleViewJournal = (habit) => { 
-    setJournalHabit(habit); 
-    setJournalMode('view'); 
-    setIsJournalModalOpen(true);
-    playSound(playInteractionSound);
-  };
-  
-  const handleSaveNote = (note) => {
-    if (journalAction === 'complete') {
-      handleApiAction(`http://localhost:5000/api/habits/${journalHabit._id}/complete`, 'POST', { note });
-      playSound(playCompletionSound);
-    } else if (journalAction === 'fail') {
-      handleApiAction(`http://localhost:5000/api/habits/${journalHabit._id}/fail`, 'POST', { note });
-    }
-    setIsJournalModalOpen(false);
-  };
+  const openJournalModal = (habit, action) => { setJournalHabit(habit); setJournalAction(() => action); setJournalMode('add'); setIsJournalModalOpen(true); };
+  const handleViewJournal = (habit) => { setJournalHabit(habit); setJournalMode('view'); setIsJournalModalOpen(true); };
+  const handleSaveNote = (note) => { if (journalAction === 'complete') { handleApiAction(`${API_BASE_URL}/api/habits/${journalHabit._id}/complete`, 'POST', { note }); } else if (journalAction === 'fail') { handleApiAction(`${API_BASE_URL}/api/habits/${journalHabit._id}/fail`, 'POST', { note }); } setIsJournalModalOpen(false); };
   
   const handleShowAddForm = () => { setEditingHabitId(null); setNewHabit({...defaultFormState, area: selectedArea === 'All' || selectedArea === 'Archived' ? 'General' : selectedArea }); setIsFormVisible(true); };
   const handleEditClick = (habit) => { setEditingHabitId(habit._id); setEditForm({ title: habit.title || "", description: habit.description || "", area: habit.area || "General", isNegative: habit.isNegative || false, frequency: habit.frequency || "", customDays: habit.customDays || [], reminderEnabled: habit.reminderEnabled || false, reminderTime: habit.reminderTime || "" }); setIsFormVisible(true); };
   const handleCloseForm = () => { setEditingHabitId(null); setIsFormVisible(false); };
+  const handleFormSubmit = async (e, habitData, url, method) => { e.preventDefault(); const dataToSend = { ...habitData, timezoneOffset: new Date().getTimezoneOffset() }; await handleApiAction(url, method, dataToSend); setIsFormVisible(false); };
   
-  // --- FIXED: This function now uses the robust `playSound` wrapper ---
-  const handleFormSubmit = async (e, habitData, url, method) => {
-    e.preventDefault();
-    const dataToSend = { ...habitData, timezoneOffset: new Date().getTimezoneOffset() };
-    
-    // We now call the sound *before* the await to ensure it's in the user gesture context.
-    // We can do this optimistically.
-    if (method === 'POST') {
-        playSound(playNewItemSound);
-    }
-    
-    await handleApiAction(url, method, dataToSend);
-    setIsFormVisible(false);
-  };
-
   const isEditing = editingHabitId !== null;
   const currentFormData = isEditing ? editForm : newHabit;
   const setCurrentFormData = isEditing ? setEditForm : setNewHabit;
@@ -190,7 +95,7 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
           ) : (
             <>
               {isFormVisible ? ( 
-                <form onSubmit={(e) => isEditing ? handleFormSubmit(e, editForm, `http://localhost:5000/api/habits/${editingHabitId}`, 'PUT') : handleFormSubmit(e, newHabit, "http://localhost:5000/api/habits", 'POST')} className="glass-card p-6 space-y-4 mb-8 flex-shrink-0">
+                <form onSubmit={(e) => isEditing ? handleFormSubmit(e, editForm, `${API_BASE_URL}/api/habits/${editingHabitId}`, 'PUT') : handleFormSubmit(e, newHabit, `${API_BASE_URL}/api/habits`, 'POST')} className="glass-card p-6 space-y-4 mb-8 flex-shrink-0">
                     <h3 className="text-xl font-bold text-[var(--text-color)] drop-shadow">{isEditing ? 'Edit Habit' : 'Add New Habit'}</h3> <div className="pt-2 border-t border-[var(--glass-border)]"><label className="flex items-center justify-between text-[var(--text-color-muted)] cursor-pointer"><span className="font-semibold">Track a habit to break?</span><div className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${currentFormData.isNegative ? 'bg-red-500' : 'bg-gray-600'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${currentFormData.isNegative ? 'translate-x-6' : ''}`} /></div><input type="checkbox" className="hidden" checked={currentFormData.isNegative} onChange={(e) => setCurrentFormData({ ...currentFormData, isNegative: e.target.checked })} /></label></div> <input type="text" placeholder="Title (e.g., No Smoking)" value={currentFormData.title} onChange={(e) => setCurrentFormData({ ...currentFormData, title: e.target.value })} className="glass-input" required /><input type="text" placeholder="Description (optional)" value={currentFormData.description} onChange={(e) => setCurrentFormData({ ...currentFormData, description: e.target.value })} className="glass-input" /><input type="text" placeholder="Area (e.g., Health)" value={currentFormData.area} onChange={(e) => setCurrentFormData({ ...currentFormData, area: e.target.value })} className="glass-input" /><select value={currentFormData.frequency} onChange={(e) => setCurrentFormData({ ...currentFormData, frequency: e.target.value, customDays: [] })} className="glass-input"> <option className="text-black" value="">Select frequency</option> <option className="text-black" value="daily">Daily</option> <option className="text-black" value="weekly">Weekly</option> <option className="text-black" value="monthly">Monthly</option> <option className="text-black" value="custom">Custom</option> </select>{currentFormData.frequency === "custom" && ( <div className="p-3 bg-white/5 rounded-lg space-y-2"> {weekdays.map(day => (<label key={day} className="flex items-center text-[var(--text-color-muted)] cursor-pointer"><input type="checkbox" checked={currentFormData.customDays.includes(day)} onChange={() => handleDayToggle(setCurrentFormData, currentFormData, day)} className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-violet-500 focus:ring-violet-500" /><span className="ml-3 text-sm">{day}</span></label>))} </div> )}<div className="pt-2 border-t border-[var(--glass-border)]"><label className="flex items-center text-[var(--text-color-muted)] cursor-pointer"><input type="checkbox" className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-violet-500 focus:ring-violet-500" checked={currentFormData.reminderEnabled} onChange={(e) => setCurrentFormData({ ...currentFormData, reminderEnabled: e.target.checked, ...(!e.target.checked && { reminderTime: "" }) })}/><span className="ml-3 font-semibold">Enable Reminders?</span></label></div>{currentFormData.reminderEnabled && (<input type="time" className="glass-input" value={currentFormData.reminderTime} onChange={(e) => setCurrentFormData({ ...currentFormData, reminderTime: e.target.value })} required />)}<div className="flex gap-4 items-center pt-2"> <button type="submit" className="glass-button">{isEditing ? 'Save Changes' : 'Add Habit'}</button> <button type="button" onClick={handleCloseForm} className="text-[var(--text-color-muted)] hover:text-[var(--text-color)] font-medium transition">Cancel</button> </div>
                 </form>
               ) : (

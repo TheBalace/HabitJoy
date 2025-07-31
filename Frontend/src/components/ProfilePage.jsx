@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import LevelProgressBar from "./LevelProgressBar"; // --- 1. IMPORT the new progress bar ---
+import LevelProgressBar from "./LevelProgressBar";
+import { API_BASE_URL } from "../api"; // Import the new base URL
 
-// A simple dictionary to hold badge details. In a real app, this might come from an API.
 const allBadges = {
   POINTS_100: { name: "Point Collector", description: "Earn your first 100 points.", icon: "💰" },
   POINTS_500: { name: "Point Enthusiast", description: "Earn 500 points.", icon: "💎" },
@@ -37,7 +37,8 @@ const ProfilePage = ({ user, onUserUpdate }) => {
       if (!user) return;
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/user/profile", { headers: getAuthHeaders() });
+        // Use the new API_BASE_URL
+        const res = await fetch(`${API_BASE_URL}/api/user/profile`, { headers: getAuthHeaders() });
         if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
         setProfileData(data.profile);
@@ -65,7 +66,8 @@ const ProfilePage = ({ user, onUserUpdate }) => {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/user/profile", {
+      // Use the new API_BASE_URL
+      const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -91,14 +93,12 @@ const ProfilePage = ({ user, onUserUpdate }) => {
 
   return (
     <div className="space-y-8">
-      {/* --- 2. NEW: Profile Header with Progress Bar --- */}
       <div className="glass-card p-6">
         <h2 className="text-3xl font-bold text-[var(--text-color)] drop-shadow mb-2">{profileData.username}</h2>
         <p className="text-lg text-[var(--text-color-muted)] mb-4">{profileData.email}</p>
         <LevelProgressBar points={user.points} />
       </div>
 
-      {/* Stats Section */}
       <div>
         <h3 className="text-2xl font-bold text-[var(--text-color)] drop-shadow mb-4">Your Stats</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -109,7 +109,6 @@ const ProfilePage = ({ user, onUserUpdate }) => {
         </div>
       </div>
 
-      {/* --- 3. NEW: Badge Gallery Section --- */}
       <div>
         <h3 className="text-2xl font-bold text-[var(--text-color)] drop-shadow mb-4">Badge Collection</h3>
         {user.badges && user.badges.length > 0 ? (
@@ -133,7 +132,6 @@ const ProfilePage = ({ user, onUserUpdate }) => {
         )}
       </div>
 
-      {/* Update Profile Section */}
       <div>
         <h3 className="text-2xl font-bold text-[var(--text-color)] drop-shadow mb-4">Update Profile</h3>
         <form onSubmit={handleUpdateProfile} className="glass-card p-6 space-y-4">

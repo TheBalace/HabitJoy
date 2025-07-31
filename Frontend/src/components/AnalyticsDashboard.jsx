@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { API_BASE_URL } from "../api"; // Import the new base URL
 
 const AnalyticsDashboard = ({ user, isOpen, onClose }) => {
   const [statsData, setStatsData] = useState([]);
@@ -15,7 +16,8 @@ const AnalyticsDashboard = ({ user, isOpen, onClose }) => {
       setLoading(true);
       const fetchStats = async () => {
         try {
-          const res = await fetch("http://localhost:5000/api/habits/stats", { headers: getAuthHeaders() });
+          // Use the new API_BASE_URL
+          const res = await fetch(`${API_BASE_URL}/api/habits/stats`, { headers: getAuthHeaders() });
           if (!res.ok) throw new Error("Failed to fetch stats");
           const data = await res.json();
           setStatsData(data);
