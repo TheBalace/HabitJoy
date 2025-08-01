@@ -37,7 +37,6 @@ const ProfilePage = ({ user, onUserUpdate }) => {
       if (!user) return;
       setLoading(true);
       try {
-        // Use the new API_BASE_URL
         const res = await fetch(`${API_BASE_URL}/api/user/profile`, { headers: getAuthHeaders() });
         if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
@@ -66,7 +65,6 @@ const ProfilePage = ({ user, onUserUpdate }) => {
     }
 
     try {
-      // Use the new API_BASE_URL
       const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },

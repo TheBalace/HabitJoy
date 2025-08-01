@@ -32,7 +32,7 @@ const App = () => {
         setToken(data.token);
         setUser(data.user);
       }
-    } catch (err) { // --- THE FIX: Added the missing curly braces ---
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);

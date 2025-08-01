@@ -1,8 +1,5 @@
 const mongoose = require("mongoose");
 
-// --- 1. NEW: Define a sub-schema for journal entries ---
-// This creates a blueprint for our log entries, ensuring each one
-// has a date and an optional note.
 const entrySchema = new mongoose.Schema({
   date: {
     type: Date,
@@ -13,7 +10,7 @@ const entrySchema = new mongoose.Schema({
     trim: true,
     default: '',
   }
-}, { _id: false }); // We set _id to false as these are sub-documents within a habit.
+}, { _id: false }); 
 
 
 const habitSchema = new mongoose.Schema({
@@ -26,13 +23,10 @@ const habitSchema = new mongoose.Schema({
   longestStreak: { type: Number, default: 0 },
   lastCompletedDate: { type: Date, default: null },
   
-  // --- 2. REPLACED: Old date arrays are now rich logs ---
-  // completedDates is now completionLog
   completionLog: {
     type: [entrySchema],
     default: [],
   },
-  // failureDates is now failureLog
   failureLog: {
     type: [entrySchema],
     default: [],

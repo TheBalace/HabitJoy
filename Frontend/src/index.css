@@ -1,23 +1,18 @@
-/* Use the standard Tailwind CSS directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* --- Color Palettes --- */
 :root {
-  /* ORIGINAL colors for the login page gradient */
   --c1: #3b82f6;
   --c2: #8b5cf6;
   --c3: #ec4899;
   --c4: #f59e0b;
 
-  /* NEW vibrant colors for the main app's radiant orbs */
   --aurora-green: #4ade80;
   --aurora-blue: #38bdf8;
   --aurora-pink: #f472b6;
   --aurora-purple: #c084fc;
 
-  /* Theme variables */
   --dark-bg: #010409;
   --dark-text: rgba(255, 255, 255, 0.9);
   --dark-text-muted: rgba(255, 255, 255, 0.6);
@@ -41,15 +36,12 @@ html {
 
 html, body, #root { height: 100%; width: 100%; margin: 0; padding: 0; }
 
-/* Set up theme-aware variables for the whole app */
 body { 
   background-color: var(--dark-bg); 
   color: var(--dark-text); 
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif; 
   -webkit-font-smoothing: antialiased; 
   -moz-osx-font-smoothing: grayscale; 
-  
-  /* Default text color for chart axes */
   --text-color-muted: var(--dark-text-muted);
 }
 
@@ -57,14 +49,12 @@ body {
   body { 
     background-color: var(--light-bg); 
     color: var(--light-text); 
-
-    /* Override text color for chart axes in light mode */
     --text-color-muted: var(--light-text-muted);
   } 
 }
 
 
-/* --- STYLE 1: Gradient for Login Page --- */
+
 .aurora-gradient-background {
   position: fixed;
   top: 0;
@@ -87,7 +77,6 @@ body {
 }
 
 
-/* --- STYLE 2: High-Performance Radiant Orbs for Main App --- */
 .aurora-container {
   position: fixed;
   top: 0;
@@ -129,7 +118,6 @@ body {
   animation: move-and-pulse-four 28s infinite ease-in-out alternate;
 }
 
-/* --- Light Mode Overrides for BOTH backgrounds --- */
 @media (prefers-color-scheme: light) {
   .aurora-gradient-background {
     background-color: var(--light-bg);
@@ -165,7 +153,6 @@ body {
 }
 
 
-/* --- Reusable Component Styles --- */
 @layer components {
   .glass-card {
     @apply relative bg-[var(--dark-glass-bg)] backdrop-blur-2xl shadow-2xl rounded-2xl;

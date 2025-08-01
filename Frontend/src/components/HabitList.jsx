@@ -3,7 +3,6 @@ import AnalyticsDashboard from "./AnalyticsDashboard";
 import ProfilePage from "./ProfilePage";
 import { API_BASE_URL } from "../api";
 
-// --- (All sub-components are unchanged) ---
 const allBadges = {
   POINTS_100: { name: "Point Collector", description: "Earn your first 100 points." },
   POINTS_500: { name: "Point Enthusiast", description: "Earn 500 points." },
@@ -89,7 +88,6 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                 </form>
               ) : (
                 <div className="flex-grow flex flex-col min-h-0">
-                  {/* --- FIXED: Responsive Header --- */}
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 flex-shrink-0">
                       <h2 className="text-3xl font-bold text-[var(--text-color)] drop-shadow">{selectedArea} Habits</h2>
                       <div className="flex items-center gap-2 sm:gap-4">
@@ -102,7 +100,6 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                         {habitsToDisplay.map(habit => {
                           const todaysAction = getTodaysAction(habit);
                           return (
-                            // --- FIXED: Responsive Habit Card Layout ---
                             <li key={habit._id} className="glass-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                               <div className="flex-grow">
                                 <p className="font-semibold text-[var(--text-color)] drop-shadow">{habit.title}</p>

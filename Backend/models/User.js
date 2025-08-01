@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  // --- ADDED: username field ---
-  // This is needed for personalized greetings (e.g., in reminder emails)
   username: {
     type: String,
     required: true,
@@ -17,13 +15,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // --- NEW GAMIFICATION FIELDS ---
   points: {
     type: Number,
-    default: 0, // Users start with 0 points
+    default: 0, 
   },
   badges: {
-    type: [String], // An array to store unique badge codes
+    type: [String],
     default: [],
   },
 });

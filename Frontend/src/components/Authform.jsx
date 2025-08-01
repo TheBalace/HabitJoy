@@ -23,7 +23,6 @@ const AuthForm = ({ type = "login", onSubmit }) => {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          // --- UPDATED: Use the new glass-input style ---
           className="glass-input"
         />
       )}
@@ -34,7 +33,6 @@ const AuthForm = ({ type = "login", onSubmit }) => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        // --- UPDATED: Use the new glass-input style ---
         className="glass-input"
       />
 
@@ -44,13 +42,11 @@ const AuthForm = ({ type = "login", onSubmit }) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        // --- UPDATED: Use the new glass-input style ---
         className="glass-input"
       />
 
       <button
         type="submit"
-        // --- UPDATED: Use the new glass-button style ---
         className="w-full glass-button"
       >
         {type === "login" ? "Login" : "Signup"}

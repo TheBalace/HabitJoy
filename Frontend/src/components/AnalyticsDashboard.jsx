@@ -16,7 +16,6 @@ const AnalyticsDashboard = ({ user, isOpen, onClose }) => {
       setLoading(true);
       const fetchStats = async () => {
         try {
-          // Use the new API_BASE_URL
           const res = await fetch(`${API_BASE_URL}/api/habits/stats`, { headers: getAuthHeaders() });
           if (!res.ok) throw new Error("Failed to fetch stats");
           const data = await res.json();

@@ -6,13 +6,11 @@ const User = require("../models/User");
 const { checkAndAwardBadges } = require("../services/gamificationService");
 const { scheduleReminders } = require("../services/reminderService"); // Assuming reminder service is correctly named
 
-// --- A single, reliable helper function for date calculations ---
 const getUserDateString = (utcDate, offsetMinutes) => {
     const localTime = new Date(utcDate.getTime() - (offsetMinutes * 60000));
     return localTime.toISOString().split('T')[0];
 };
 
-// --- Analytics route ---
 router.get("/stats", authMiddleware, async (req, res) => {
   try {
     const habits = await Habit.find({ userId: req.user.id });
@@ -49,7 +47,6 @@ router.get("/stats", authMiddleware, async (req, res) => {
   }
 });
 
-// --- Completion route ---
 router.post("/:id/complete", authMiddleware, async (req, res) => {
     try {
         const { note } = req.body;
@@ -99,7 +96,6 @@ router.post("/:id/complete", authMiddleware, async (req, res) => {
     }
 });
 
-// --- Undo a completion for the day (FIXED) ---
 router.post("/:id/undo", authMiddleware, async (req, res) => {
     try {
         const habit = await Habit.findById(req.params.id);
@@ -111,25 +107,19 @@ router.post("/:id/undo", authMiddleware, async (req, res) => {
         const todayUserString = getUserDateString(new Date(), offset);
         const initialLength = habit.completionLog.length;
 
-        // Filter out today's completion
         habit.completionLog = habit.completionLog.filter(entry => getUserDateString(entry.date, offset) !== todayUserString);
 
         if (habit.completionLog.length === initialLength) {
             return res.status(400).json({ message: "Habit was not completed today." });
         }
 
-        // --- THE FIX ---
-        // Check if the current streak was the longest streak before we change it.
         const wasAtMaxStreak = habit.currentStreak === habit.longestStreak;
 
-        // Decrement the current streak.
         habit.currentStreak = Math.max(0, habit.currentStreak - 1);
 
-        // If it WAS the longest streak, the longest streak must now also be reduced.
         if (wasAtMaxStreak) {
             habit.longestStreak = habit.currentStreak;
         }
-        // --- END OF FIX ---
 
         const user = await User.findById(req.user.id);
         if (user) {
@@ -149,9 +139,6 @@ router.post("/:id/undo", authMiddleware, async (req, res) => {
 });
 
 
-// --- (The rest of the routes are unchanged) ---
-
-// Get all ACTIVE habits
 router.get("/", authMiddleware, async (req, res) => { 
   try { 
     const habits = await Habit.find({ userId: req.user.id, isArchived: { $ne: true } }).sort({ createdAt: -1 }); 
@@ -162,7 +149,6 @@ router.get("/", authMiddleware, async (req, res) => {
   } 
 });
 
-// Get ALL habits for a user (active and archived)
 router.get("/all", authMiddleware, async (req, res) => {
   try {
     const habits = await Habit.find({ userId: req.user.id }).sort({ createdAt: -1 });
@@ -173,7 +159,6 @@ router.get("/all", authMiddleware, async (req, res) => {
   }
 });
 
-// Get all ARCHIVED habits
 router.get("/archived", authMiddleware, async (req, res) => {
   try {
     const habits = await Habit.find({ userId: req.user.id, isArchived: true }).sort({ createdAt: -1 });
@@ -184,22 +169,16 @@ router.get("/archived", authMiddleware, async (req, res) => {
   }
 });
 
-// Create a new habit
 router.post("/", authMiddleware, async (req, res) => { try { const { title, description, frequency, customDays = [], reminderEnabled, reminderTime, timezoneOffset, area, isNegative } = req.body; const newHabit = new Habit({ userId: req.user.id, title, description, frequency, customDays, reminderEnabled, reminderTime, timezoneOffset, area, isNegative, }); const savedHabit = await newHabit.save(); res.status(201).json(savedHabit); } catch (err) { console.error("Error creating habit:", err); res.status(500).json({ message: "Server error" }); } });
 
-// Update a habit
 router.put("/:id", authMiddleware, async (req, res) => { try { const habit = await Habit.findById(req.params.id); if (!habit || habit.userId.toString() !== req.user.id) { return res.status(404).json({ message: "Habit not found" }); } const { title, description, frequency, customDays = [], reminderEnabled, reminderTime, timezoneOffset, area, isNegative } = req.body; habit.title = title ?? habit.title; habit.description = description ?? habit.description; habit.frequency = frequency ?? habit.frequency; habit.customDays = frequency === "custom" ? customDays : []; habit.reminderEnabled = reminderEnabled ?? habit.reminderEnabled; habit.reminderTime = reminderTime; habit.timezoneOffset = timezoneOffset ?? habit.timezoneOffset; habit.area = area ?? habit.area; habit.isNegative = isNegative ?? habit.isNegative; const updatedHabit = await habit.save(); res.json(updatedHabit); } catch (err) { console.error("Error updating habit:", err); res.status(500).json({ message: "Server error" }); } });
 
-// Delete a habit
 router.delete("/:id", authMiddleware, async (req, res) => { try { const habit = await Habit.findById(req.params.id); if (!habit) { return res.status(404).json({ message: "Habit not found" }); } if (habit.userId.toString() !== req.user.id) { return res.status(401).json({ message: "Not authorized" }); } await habit.deleteOne(); res.json({ message: "Habit deleted successfully" }); } catch (err) { console.error("Error deleting habit:", err); res.status(500).json({ message: "Server error" }); } });
 
-// Archive/unarchive a habit
 router.put("/:id/archive", authMiddleware, async (req, res) => { try { const habit = await Habit.findById(req.params.id); if (!habit || habit.userId.toString() !== req.user.id) { return res.status(404).json({ message: "Habit not found" }); } habit.isArchived = !habit.isArchived; const savedHabit = await habit.save(); res.json({ habit: savedHabit }); } catch (err) { console.error("Archive toggle error:", err); res.status(500).json({ message: "Server error" }); } });
 
-// Log a failure for a negative habit
 router.post("/:id/fail", authMiddleware, async (req, res) => { try { const { note } = req.body; const habit = await Habit.findById(req.params.id); if (!habit) { return res.status(404).json({ message: "Habit not found" }); } if (!habit.isNegative) { return res.status(400).json({ message: "This action is only for negative habits." }); } habit.failureLog.push({ date: new Date(), note: note || '' }); habit.currentStreak = 0; await habit.save(); res.json({ message: "Habit setback logged", habit }); } catch (err) { console.error("Failure log error:", err); res.status(500).json({ message: "Server error" }); } });
 
-// Reset a habit's progress
 router.post("/:id/reset", authMiddleware, async (req, res) => { try { const habit = await Habit.findById(req.params.id); if (!habit) { return res.status(404).json({ message: "Habit not found" }); } habit.currentStreak = 0; habit.longestStreak = 0; habit.completionLog = []; habit.failureLog = []; await habit.save(); res.json({ message: "Habit reset.", habit }); } catch (err) { console.error(err); res.status(500).json({ message: "Server error" }); } });
 
 module.exports = router;

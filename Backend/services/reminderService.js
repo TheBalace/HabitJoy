@@ -18,43 +18,30 @@ const scheduleReminders = () => {
   
   cron.schedule('* * * * *', async () => {
     try {
-      // --- THE FIX: Timezone-Aware Reminder Logic ---
 
-      // 1. Find ALL habits where reminders are enabled.
-      // We don't check the time here, because the "correct" time is different for every user.
       const habitsToPotentiallyRemind = await Habit.find({
         reminderEnabled: true,
         isArchived: { $ne: true }
       });
 
       if (habitsToPotentiallyRemind.length === 0) {
-        return; // No active reminders in the whole system.
+        return;
       }
 
       const nowUTC = new Date();
 
-      // 2. Loop through each habit and check the time in the user's local timezone.
       for (const habit of habitsToPotentiallyRemind) {
-        // If a habit is missing the offset for some reason, we can't process it.
         if (habit.timezoneOffset === null || habit.timezoneOffset === undefined) {
             continue;
         }
 
-        // 3. Calculate the user's current local time.
-        // The browser's getTimezoneOffset() is inverted (e.g., India is UTC+5:30, but offset is -330).
-        // To get local time from UTC, we must SUBTRACT the offset.
         const userLocalTime = new Date(nowUTC.getTime() - (habit.timezoneOffset * 60000));
         
-        // 4. Get the current hour and minute from the user's calculated local time.
-        // We use getUTCHours() and getUTCMinutes() on this *new* date object. This is the correct
-        // way to get the time components without the server's own timezone interfering.
         const userCurrentHour = userLocalTime.getUTCHours();
         const userCurrentMinute = userLocalTime.getUTCMinutes();
         const userCurrentTime = `${String(userCurrentHour).padStart(2, '0')}:${String(userCurrentMinute).padStart(2, '0')}`;
         
-        // 5. Compare the user's current time with their saved reminder time.
         if (userCurrentTime === habit.reminderTime) {
-          // If they match, we send the email!
           const user = await User.findById(habit.userId);
           if (!user) continue;
 

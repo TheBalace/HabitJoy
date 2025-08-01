@@ -6,7 +6,6 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// POST /api/auth/signup
 router.post("/signup", async (req, res) => {
   const { username, email, password } = req.body;
   try {
@@ -20,7 +19,6 @@ router.post("/signup", async (req, res) => {
       expiresIn: "1h"
     });
 
-    // --- NEW: Prepare and send back user data on signup ---
     const userData = {
       id: user._id,
       username: user.username,
@@ -29,7 +27,7 @@ router.post("/signup", async (req, res) => {
       badges: user.badges,
     };
 
-    res.status(201).json({ token, user: userData }); // Send user data here
+    res.status(201).json({ token, user: userData }); 
 
   } catch (err) {
     console.error(err);
@@ -37,7 +35,6 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
