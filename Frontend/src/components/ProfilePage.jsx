@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import LevelProgressBar from "./LevelProgressBar";
-import { API_BASE_URL } from "../api"; // Import the new base URL
+import { API_BASE_URL } from "../api";
 
 const allBadges = {
   POINTS_100: { name: "Point Collector", description: "Earn your first 100 points.", icon: "💰" },

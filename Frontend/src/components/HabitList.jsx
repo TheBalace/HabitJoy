@@ -109,7 +109,6 @@ const HabitList = ({ user, onUserUpdate, onLogout }) => {
                                   <span>🏆 Longest Streak: <span className="font-semibold">{habit.longestStreak || 0}</span></span>
                                 </div>
                               </div>
-                              {/* --- FIXED: Responsive Button Container --- */}
                               <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4 flex-shrink-0">
                                 {selectedArea === 'Archived' ? ( <> <button onClick={() => handleDelete(habit._id)} className="text-xs font-semibold text-red-400 hover:text-red-500 transition">Delete</button> <button onClick={() => handleArchiveToggle(habit._id)} className="text-xs font-semibold text-emerald-400 hover:text-emerald-500 transition">Restore</button> </>
                                 ) : (

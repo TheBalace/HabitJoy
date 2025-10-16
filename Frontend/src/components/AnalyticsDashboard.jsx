@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { API_BASE_URL } from "../api"; // Import the new base URL
+import { API_BASE_URL } from "../api";
 
 const AnalyticsDashboard = ({ user, isOpen, onClose }) => {
   const [statsData, setStatsData] = useState([]);
