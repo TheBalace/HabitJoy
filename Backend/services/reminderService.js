@@ -4,7 +4,9 @@ const Habit = require('../models/Habit');
 const User = require('../models/User');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, 
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
@@ -82,8 +84,8 @@ const scheduleReminders = () => {
           };
 
           try {
-            await transporter.sendMail(mailOptions);
-            console.log(`✅ Email sent successfully to ${user.email}`);
+            let info = await transporter.sendMail(mailOptions);
+            console.log(`✅ Email sent successfully to ${user.email}. Message ID: ${info.messageId}`);
           } catch (error) {
             console.error("❌ Gmail Send Error:", error);
           }
