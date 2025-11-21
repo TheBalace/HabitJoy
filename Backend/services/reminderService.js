@@ -1,9 +1,15 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const Habit = require('../models/Habit');
 const User = require('../models/User');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
 
 const motivationalMessages = [
   "Consistency is key! You've got this.",
@@ -47,12 +53,11 @@ const scheduleReminders = () => {
 
           const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
 
-          try {
-            const data = await resend.emails.send({
-              from: 'HabitJoy <onboarding@resend.dev>', 
-              to: [user.email],
-              subject: `✨ Time for your habit: ${habit.title}!`,
-              html: `
+          const mailOptions = {
+            from: `"HabitJoy" <${process.env.GMAIL_USER}>`,
+            to: user.email,
+            subject: `✨ Time for your habit: ${habit.title}!`,
+            html: `
                 <div style="font-family: 'Inter', system-ui, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                   <div style="background-color: #8b5cf6; color: white; padding: 24px; text-align: center;">
                     <h1 style="margin: 0; font-size: 28px;">HabitJoy Reminder</h1>
@@ -73,11 +78,14 @@ const scheduleReminders = () => {
                     <p style="margin: 0;">You are receiving this because you set a reminder in the HabitJoy app.</p>
                   </div>
                 </div>
-              `
-            });
-            console.log(`Email sent successfully ID: ${data.id}`);
-          } catch (emailError) {
-            console.error("Resend Email Error:", emailError);
+            `
+          };
+
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log(`✅ Email sent successfully to ${user.email}`);
+          } catch (error) {
+            console.error("❌ Gmail Send Error:", error);
           }
         }
       }
